@@ -23,8 +23,8 @@
         ['key' => 'beranda',   'label' => 'Beranda',   'url' => 'kasir/dashboard'],
         ['key' => 'transaksi', 'label' => 'Transaksi', 'url' => 'kasir/transaksi'],
         ['key' => 'produk',    'label' => 'Produk',    'url' => 'kasir/produk'],
-        ['key' => 'laporan',   'label' => 'Laporan',   'url' => 'kasir/laporan'],
-        ['key' => 'profil',    'label' => 'Profil',    'url' => 'kasir/profil'],
+        ['key' => 'laporan',   'label' => 'Laporan',   'url' => 'kasir/transaksi/struk'],
+        // ['key' => 'profil',    'label' => 'Profil',    'url' => 'kasir/profil'],
     ];
 ?>
 
@@ -63,7 +63,7 @@
 
 <!-- Bottom Navbar -->
 <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
-    <div class="max-w-3xl mx-auto grid grid-cols-5 px-2 py-2">
+    <div class="max-w-3xl mx-auto grid grid-cols-4 px-2 py-2">
         <?php foreach ($menus as $m): ?>
             <?php $is = $active === $m['key']; ?>
             <a href="<?= site_url($m['url']) ?>" class="flex flex-col items-center justify-center gap-1 py-1.5 transition-colors <?= $is ? 'nav-active' : 'text-slate-400 hover:text-slate-600' ?>">

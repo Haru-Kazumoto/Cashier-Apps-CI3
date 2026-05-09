@@ -3,11 +3,40 @@
 
 <?php $navy = '#1e3a5f'; ?>
 
+<?php if ($this->session->flashdata('success')): ?>
+    <div
+        id="successBox" class="mb-4 px-4 py-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm flex items-center gap-2 transition-all duration-500 transform opacity-100">
+
+        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+
+        <?= $this->session->flashdata('success') ?>
+    </div>
+
+    <script>
+        setTimeout(() => {
+            const alertBox = document.getElementById('successBox');
+
+            if (alertBox) {
+                alertBox.classList.add(
+                    'opacity-0',
+                    '-translate-y-2'
+                );
+
+                setTimeout(() => {
+                    alertBox.remove();
+                }, 500);
+            }
+        }, 3000);
+    </script>
+<?php endif; ?>
+
 <!-- Greeting -->
 <div class="mb-6">
     <p class="text-sm text-slate-500">Selamat datang kembali,</p>
     <h1 class="text-2xl font-bold text-slate-800" style="font-family:'Playfair Display',serif;">
-        <?= $user['nama'] ?? 'Kasir' ?>
+        <?= $this->session->userdata('fullname') ?>
     </h1>
     <p class="text-xs text-slate-400 mt-1"><?= date('l, d F Y') ?></p>
 </div>
@@ -21,18 +50,18 @@
     <p class="text-3xl font-bold mb-3">Rp <?= number_format($omzet_hari_ini ?? 0, 0, ',', '.') ?></p>
     <div class="flex items-center gap-4 pt-3 border-t border-white/15 text-sm">
         <div>
-            <p class="text-white/60 text-xs">Transaksi</p>
+            <p class="text-white/60 text-xs">Transaksi Hari Ini</p>
             <p class="font-semibold"><?= $jumlah_transaksi ?? 0 ?></p>
         </div>
         <div class="w-px h-8 bg-white/15"></div>
         <div>
-            <p class="text-white/60 text-xs">Produk Terjual</p>
+            <p class="text-white/60 text-xs">Produk Terjual Hari Ini</p>
             <p class="font-semibold"><?= $produk_terjual ?? 0 ?></p>
         </div>
     </div>
 </div>
 
-<!-- Mini Stats -->
+<!-- Mini Stats 
 <div class="grid grid-cols-2 gap-3 mb-6">
     <div class="bg-white border border-slate-200 rounded-xl p-4">
         <div class="w-9 h-9 rounded-lg flex items-center justify-center mb-2" style="background-color: rgba(30,58,95,0.08);">
@@ -53,6 +82,7 @@
         <p class="text-lg font-bold text-slate-800"><?= $stok_menipis ?? 0 ?></p>
     </div>
 </div>
+-->
 
 <!-- Quick Action -->
 <a href="<?= site_url('kasir/transaksi') ?>" class="block w-full mb-7 rounded-xl py-4 px-5 text-white font-semibold text-center transition-opacity hover:opacity-90 active:opacity-80" style="background-color: <?= $navy ?>;">
@@ -96,4 +126,3 @@
         <?php endif; ?>
     </div>
 </div>
-

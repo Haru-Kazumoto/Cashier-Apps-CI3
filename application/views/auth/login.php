@@ -2,7 +2,6 @@
 <!-- Dirender melalui layout dengan $layout = 'auth' -->
 
 <?php $navy = '#1e3a5f'; ?>
-
 <div class="min-h-screen flex bg-white">
 
     <!-- Left Panel — Form Login -->
@@ -25,13 +24,57 @@
             </div>
 
             <!-- Flash error -->
-            <?php if ($this->session->flashdata('login_error')): ?>
-                <div class="mb-5 flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">
+            <?php if ($this->session->flashdata('error')): ?>
+                <div id="errorBox" class="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2 transition-all duration-500 transform opacity-100">
                     <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <?= $this->session->flashdata('login_error') ?>
+                    <?= $this->session->flashdata('error') ?>
                 </div>
+
+                <script>
+                    setTimeout(() => {
+                        const alertBox = document.getElementById('errorBox');
+
+                        if (alertBox) {
+                            alertBox.classList.add(
+                                'opacity-0',
+                                '-translate-y-2'
+                            );
+
+                            setTimeout(() => {
+                                alertBox.remove();
+                            }, 500);
+                        }
+                    }, 3000);
+                </script>
+            <?php endif; ?>
+
+            <!-- Flash logout success -->
+            <?php if ($this->session->flashdata('logout_success')): ?>
+                <div id="logoutStatus" class="mb-4 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-sm flex items-center gap-2 transition-all duration-500 transform opacity-100">
+                    <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <?= $this->session->flashdata('logout_success') ?>
+                </div>
+
+                <script>
+                    setTimeout(() => {
+                        const alertBox = document.getElementById('logoutStatus');
+
+                        if (alertBox) {
+                            alertBox.classList.add(
+                                'opacity-0',
+                                '-translate-y-2'
+                            );
+
+                            setTimeout(() => {
+                                alertBox.remove();
+                            }, 500);
+                        }
+                    }, 3000);
+                </script>
             <?php endif; ?>
 
             <?= form_open('authenticate', ['class' => 'space-y-5']) ?>

@@ -23,7 +23,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = 'http://aplikasi_kasir.test/index.php/';
+$config['base_url'] = 'http://aplikasi_kasir.test/';
 
 /*
 |--------------------------------------------------------------------------
@@ -36,7 +36,7 @@ $config['base_url'] = 'http://aplikasi_kasir.test/index.php/';
 |
 */
 // $config['index_page'] = 'index.php';
-$config['index_page'] = '';
+$config['index_page'] = 'index.php';
 
 /*
 |--------------------------------------------------------------------------

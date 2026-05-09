@@ -62,4 +62,12 @@ $route['logout'] = 'authentication/logout';
 $route['dashboard/superadmin'] = 'dashboard/superadmin';
 
 // ADMIN ROUTE
-$route['dashboard/admin'] = 'dashboard/admin';
+$route['kasir/dashboard'] = 'dashboard/admin';
+$route['kasir/transaksi'] = 'transactions/index';
+$route['kasir/transaksi/save'] = 'transactions/save';
+$route['kasir/transaksi/struk'] = 'transactions/reports';
+$route['kasir/produk'] = 'product/index';
+$route['kasir/produk/tambah'] = 'product/new';
+$route['kasir/produk/edit/(:num)'] = 'product/edit/$1';
+$route['kasir/produk/save'] = 'product/save';
+$route['kasir/produk/update/(:num)'] = 'product/update/$1';

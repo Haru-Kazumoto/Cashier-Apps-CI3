@@ -48,7 +48,7 @@ CREATE TABLE products (
     price DECIMAL(15,2) NOT NULL DEFAULT 0,
     stock INT NOT NULL DEFAULT 0,
 
-    unit VARCHAR(50),
+    image VARCHAR(255),
 
     created_by INT,
 
@@ -114,3 +114,11 @@ INSERT INTO users(username, PASSWORD, fullname, is_admin, created_at, updated_at
 	NOW(),
 	NOW()
 );
+
+INSERT INTO categories(`name`, `description`, created_at, updated_at) VALUES 
+('Kopi', 'Minuman Kopi kopian', NOW(), NOW()),
+('Roti', 'Makanan Roti rotian', NOW(), NOW()),
+('Mie', 'Makanan Mie', NOW(), NOW()),
+('Gorengan', 'Makanan goreng gorengan', NOW(), NOW()),
+('Minuman Sirup', 'Minuman Bersirup', NOW(), NOW()),
+('Minuman bubuk', 'Minuman Berbubuk', NOW(), NOW());

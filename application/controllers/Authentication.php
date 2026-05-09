@@ -21,7 +21,7 @@ class Authentication extends MY_Controller
                 if (!$user->is_admin) {
                     redirect('dashboard/superadmin');
                 } else {
-                    redirect('dashboard/admin');
+                    redirect('kasir/dashboard');
                 }
             }
         }
@@ -63,10 +63,11 @@ class Authentication extends MY_Controller
 
             if ($user && password_verify($password, $user->password)) {
                 $this->session->set_userdata($this->build_session_data((array)$user));
+                $this->session->set_flashdata('success', 'Login berhasil! Halo '.$user->fullname.' Selamat datang kembali!');
 
                 $this->redirect_authenticated_user($user->id);
             } else {
-                $this->session->set_flashdata('error', 'Invalid username or password');
+                $this->session->set_flashdata('error', 'Kredensial tidak valid! Coba lagi.');
 
                 $this->login();
             }
@@ -76,6 +77,7 @@ class Authentication extends MY_Controller
     public function logout()
     {
         $this->session->unset_userdata(['user_id', 'username', 'is_admin', 'fullname', 'logged_in']);
+        $this->session->set_flashdata('logout_success', 'Logout berhasil!');
         redirect('authentication/login');
     }
 }
