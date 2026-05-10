@@ -30,10 +30,11 @@ class Authentication extends MY_Controller
     private function build_session_data(array $user)
     {
         return [
-            'user_id' => $user['id'],
-            'username' => $user['username'],
-            'is_admin' => $user['is_admin'],
-            'fullname' => $user['fullname'],
+            'user_id'   => $user['id'],
+            'username'  => $user['username'],
+            'is_admin'  => $user['is_admin'],
+            'role'      => $user['is_admin'] > 0 ? 'admin' : 'superadmin',
+            'fullname'  => $user['fullname'],
             'logged_in' => true
         ];
     }
@@ -61,11 +62,11 @@ class Authentication extends MY_Controller
 
             $user = $this->User_model->get_by_username($username);
 
-            if ($user && password_verify($password, $user->password)) {
+            if ($user && password_verify($password, $user['password'])) {
                 $this->session->set_userdata($this->build_session_data((array)$user));
-                $this->session->set_flashdata('success', 'Login berhasil! Halo '.$user->fullname.' Selamat datang kembali!');
+                $this->session->set_flashdata('success', 'Login berhasil! Halo '.$user['fullname'].' Selamat datang kembali!');
 
-                $this->redirect_authenticated_user($user->id);
+                $this->redirect_authenticated_user($user['id']);
             } else {
                 $this->session->set_flashdata('error', 'Kredensial tidak valid! Coba lagi.');
 

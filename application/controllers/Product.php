@@ -28,6 +28,17 @@ class Product extends MY_Controller
         $this->render('products/index', $data, 'admin');
     }
 
+    public function index_superadmin()
+    {
+        $data = [
+            'title' => 'Produk',
+            'active_menu' => 'products',
+            'produk' => $this->Product_model->get_all(),
+        ];
+
+        $this->render('products/index_superadmin', $data, 'superadmin');
+    }
+
     // ini untuk 
     public function new()
     {
@@ -36,7 +47,7 @@ class Product extends MY_Controller
             'categories' => $this->Category_model->get_all(),
         ];
 
-        $this->render('products/create', $data, 'admin');
+        $this->render('products/create', $data, $this->session->userdata('role'));
     }
 
     public function save()
@@ -53,7 +64,9 @@ class Product extends MY_Controller
         if ($this->form_validation->run() === false) {
             $data['categories']   = $this->Product_model->get_categories();
             $data['upload_error'] = null;
-            $this->render('kasir/produk/tambah', $data, 'admin');
+            $this->session->userdata('is_admin') > 0
+                ? $this->render('kasir/produk/tambah', $data, 'admin')
+                : $this->render('superadmin/products/tambah', $data, 'superadmin');
             return;
         }
 
@@ -64,12 +77,16 @@ class Product extends MY_Controller
 
         if ($result === true) {
             $this->session->set_flashdata('success', 'Produk berhasil ditambahkan.');
-            redirect('kasir/produk');
+            $this->session->userdata('is_admin') > 0 ? redirect('kasir/produk') : redirect('superadmin/products');
         } else {
             // Error dari upload atau DB
             $data['categories']   = $this->Product_model->get_categories();
             $data['upload_error'] = $result;
-            $this->render('kasir/produk/tambah', $data, 'admin');
+
+
+            $this->session->userdata('is_admin') > 0
+                ? $this->render('kasir/produk/tambah', $data, 'admin')
+                : $this->render('superadmin/products/tambah', $data, 'superadmin');
         }
     }
 
@@ -86,7 +103,7 @@ class Product extends MY_Controller
             'produk'        => $data_produk
         ];
 
-        $this->render('products/edit', $data, 'admin');
+        $this->render('products/edit', $data, $this->session->userdata('role'));
     }
 
     public function update(int $id)
@@ -156,5 +173,22 @@ class Product extends MY_Controller
         $this->Product_model->update($id, $data_update);
         $this->session->set_flashdata('success', 'Produk berhasil diperbarui.');
         redirect('kasir/produk');
+    }
+
+    public function delete(int $id)
+    {
+        $deleted = $this->Product_model->delete((int) $id);
+
+        if ($deleted) {
+
+            $this->session->set_flashdata('success', 'Produk berhasil dihapus');
+        } else {
+
+            $this->session->set_flashdata('error', 'Produk gagal dihapus');
+        }
+
+        $this->session->userdata('is_admin') > 0
+            ? redirect('kasir/produk')
+            : redirect('superadmin/products');
     }
 }

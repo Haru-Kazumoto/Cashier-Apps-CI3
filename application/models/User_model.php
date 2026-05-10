@@ -9,27 +9,41 @@ class User_model extends CI_Model
     public function get_all()
     {
         return $this->db
-            ->where('deleted_at', null)
+            ->order_by('created_at', 'desc')
             ->get($this->table)
-            ->result();
+            ->result_array();
     }
 
-    public function get_by_id(int $id)
+    public function get($id)
     {
         return $this->db
-            ->where('id', $id)
-            ->where('deleted_at', null)
+            ->where('id', (int) $id)
             ->get($this->table)
-            ->row();
+            ->row_array();
     }
 
     public function get_by_username(string $username)
     {
         return $this->db
             ->where('username', $username)
-            ->where('deleted_at', null)
             ->get($this->table)
-            ->row();
+            ->row_array();
+    }
+
+    public function insert(array $data)
+    {
+        $clean = $this->sanitize($data);
+        $clean['created_at'] = date('Y-m-d H:i:s');
+        $this->db->insert($this->table, $clean);
+        return $this->db->insert_id();
+    }
+
+    public function update(int $id, array $data)
+    {
+        $clean = $this->sanitize($data);
+        return $this->db
+            ->where('id', (int) $id)
+            ->update($this->table, $clean);
     }
 
     public function get_status_role_by_id(int $id)
@@ -39,24 +53,21 @@ class User_model extends CI_Model
             ->row();
     }
 
-    public function create(array $data)
-    {
-        return $this->db->insert($this->table, $data);
-    }
-
-    public function update(int $id, array $data)
-    {
-        return $this->db
-            ->where('id', $id)
-            ->update($this->table, $data);
-    }
-
     public function delete(int $id)
     {
         return $this->db
-            ->where('id', $id)
-            ->update($this->table, [
-                'deleted_at' => date('Y-m-d H:i:s')
-            ]);
+            ->where('id', (int) $id)
+            ->delete($this->table);
+    }
+
+    private function sanitize(array $data)
+    {
+        $allowed = ['fullname', 'username', 'password', 'is_admin'];
+        return array_intersect_key($data, array_flip($allowed));
+    }
+
+    public function count_all()
+    {
+        return $this->db->count_all('users');
     }
 }

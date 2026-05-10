@@ -109,8 +109,7 @@
                     </a>
                     <button type="button"
                         onclick="confirmHapus(<?= $p->id ?>, '<?= addslashes($p->name) ?>')"
-                        class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
-                        title="Hapus">
+                        class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:bg-base_url-50 hover:text-red-index.php/kasir/produk/delete   title="Hapus">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" />
                         </svg>
@@ -182,7 +181,7 @@
         // Modal hapus
         window.confirmHapus = function(id, nama) {
             document.getElementById('hapus-nama').textContent = nama;
-            document.getElementById('btn-confirm-hapus').href = '<?= site_url('kasir/produk/hapus/') ?>' + id;
+            document.getElementById('btn-confirm-hapus').href = '<?= base_url('index.php/kasir/produk/delete/') ?>' + id;
             const modal = document.getElementById('modal-hapus');
             modal.classList.remove('hidden');
             modal.classList.add('flex');

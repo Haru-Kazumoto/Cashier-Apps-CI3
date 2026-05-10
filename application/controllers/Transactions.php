@@ -55,33 +55,17 @@ class Transactions extends MY_Controller
 
     public function reports()
     {
-        // ini untuk filtering, gausah dihiraukan nanti kerjaan gue (jiaur)
         $dari   = $this->input->get('dari')   ?: date('Y-m-01');
         $sampai = $this->input->get('sampai') ?: date('Y-m-d');
 
-        // Ambil transaksi + items via model
-        // Pastikan tiap item punya struktur lengkap (lihat di bawah)
-        // $transaksi = $this->transaksi_model->get_by_periode($dari, $sampai);
-        // bentuk datanya harus begini ya
-        $transaksi = [
-            [
-                'id'              => 12,
-                'kode'            => 'TRX0012',
-                'waktu'           => '2026-05-08 14:22:00',
-                'waktu_formatted' => '08 Mei 2026, 14:22',
-                'kasir'           => 'Andi',
-                'metode'          => 'tunai',          // tunai/transfer/qris
-                'jumlah_item'     => 3,
-                'subtotal'        => 145000,
-                'diskon'          => 0,
-                'total'           => 145000,
-                'uang_diterima'   => 150000,           // hanya kalau tunai
-                'items'           => [                 // array detail produk
-                    ['nama' => 'Kopi Susu', 'harga' => 18000, 'qty' => 2],
-                    ['nama' => 'Roti Bakar', 'harga' => 15000, 'qty' => 1],
-                ],
-            ]
-        ]; // sementara gua pake begini, sisanya lu bikin sendiri ya :)
+        // Validasi simpel: pastikan format YYYY-MM-DD
+        if (!$this->valid_date($dari))   $dari   = date('Y-m-01');
+        if (!$this->valid_date($sampai)) $sampai = date('Y-m-d');
+
+        // Kalau dari > sampai, swap supaya gak hasil kosong
+        if (strtotime($dari) > strtotime($sampai)) {
+            [$dari, $sampai] = [$sampai, $dari];
+        }
 
         $data = [
             'title'         => 'Laporan',
@@ -89,9 +73,81 @@ class Transactions extends MY_Controller
             'active_menu'   => 'laporan',
             'filter_dari'   => $dari,
             'filter_sampai' => $sampai,
-            'transaksi'     => $transaksi,
+            'transaksi'     => $this->Transaction_model->get_by_periode($dari, $sampai),
         ];
 
         $this->render('transactions/reports', $data, 'admin');
+    }
+
+    public function reports_superadmin()
+    {
+        $dari   = $this->input->get('dari')   ?: date('Y-m-01');
+        $sampai = $this->input->get('sampai') ?: date('Y-m-d');
+
+        // Validasi simpel: pastikan format YYYY-MM-DD
+        if (!$this->valid_date($dari))   $dari   = date('Y-m-01');
+        if (!$this->valid_date($sampai)) $sampai = date('Y-m-d');
+
+        // Kalau dari > sampai, swap supaya gak hasil kosong
+        if (strtotime($dari) > strtotime($sampai)) {
+            [$dari, $sampai] = [$sampai, $dari];
+        }
+
+        $data = [
+            'title'         => 'Laporan',
+            'layout'        => 'kasir',
+            'active_menu'   => 'transactions',
+            'filter_dari'   => $dari,
+            'filter_sampai' => $sampai,
+            'transaksi'     => $this->Transaction_model->get_by_periode($dari, $sampai),
+        ];
+
+        $this->render('transactions/reports_superadmin', $data, 'superadmin');
+    }
+
+    public function export()
+    {
+        $dari   = $this->input->get('dari')   ?: date('Y-m-01');
+        $sampai = $this->input->get('sampai') ?: date('Y-m-d');
+
+        if (!$this->valid_date($dari))   $dari   = date('Y-m-01');
+        if (!$this->valid_date($sampai)) $sampai = date('Y-m-d');
+
+        $transaksi = $this->Transaction_model->get_by_periode($dari, $sampai);
+
+        // Output CSV
+        $filename = "laporan_transaksi_{$dari}_sampai_{$sampai}.csv";
+        header('Content-Type: text/csv; charset=utf-8');
+        header("Content-Disposition: attachment; filename=\"{$filename}\"");
+
+        $out = fopen('php://output', 'w');
+        // BOM untuk Excel-friendly UTF-8
+        fputs($out, "\xEF\xBB\xBF");
+
+        // Header CSV
+        fputcsv($out, ['Invoice', 'Tanggal', 'Kasir', 'Metode', 'Jumlah Item', 'Subtotal', 'Diskon', 'Total']);
+
+        // Data
+        foreach ($transaksi as $t) {
+            fputcsv($out, [
+                $t['kode'],
+                $t['waktu'],
+                $t['kasir'],
+                $t['metode'],
+                $t['jumlah_item'],
+                $t['subtotal'],
+                $t['diskon'],
+                $t['total'],
+            ]);
+        }
+
+        fclose($out);
+        exit;
+    }
+
+    private function valid_date(string $str)
+    {
+        $d = DateTime::createFromFormat('Y-m-d', $str);
+        return $d && $d->format('Y-m-d') === $str;
     }
 }

@@ -10,7 +10,7 @@
 </div>
 
 <!-- Filter Periode -->
-<form method="get" action="<?= site_url('kasir/laporan') ?>" class="grid grid-cols-2 gap-2 mb-4">
+<form method="get" action="<?= site_url('kasir/transaksi/struk') ?>" class="grid grid-cols-2 gap-2 mb-4">
     <div>
         <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Dari</label>
         <input type="date" name="dari" value="<?= $filter_dari ?? date('Y-m-01') ?>"

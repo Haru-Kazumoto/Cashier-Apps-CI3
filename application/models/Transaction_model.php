@@ -101,7 +101,7 @@ class Transaction_model extends CI_Model
             'total_price'    => $total,
             'total_pay'      => $total_pay,
             'total_return'   => $total_return,
-            'payment_method' => $payment_method,
+            'payment_method' => strtoupper($payment_method),
             'created_by'     => $created_by,
         ]);
 
@@ -176,21 +176,217 @@ class Transaction_model extends CI_Model
      */
     public function get_by_periode(string $dari, string $sampai)
     {
+        // 1. Ambil header transaksi + join nama kasir
         $rows = $this->db
-            ->where('DATE(created_at) >=', $dari)
-            ->where('DATE(created_at) <=', $sampai)
-            ->order_by('created_at', 'desc')
-            ->get('transactions')->result_array();
+            ->select('t.*, u.fullname AS kasir_name')
+            ->from('transactions t')
+            ->join('users u', 'u.id = t.created_by', 'left')
+            ->where('DATE(t.created_at) >=', $dari)
+            ->where('DATE(t.created_at) <=', $sampai)
+            ->order_by('t.created_at', 'desc')
+            ->get()
+            ->result_array();
 
-        foreach ($rows as &$r) {
-            $r['items'] = $this->db
-                ->select('td.*, p.nama AS product_name')
-                ->from('transaction_details td')
-                ->join('produk p', 'p.id = td.product_id', 'left')
-                ->where('td.transaction_id', $r['id'])
-                ->get()->result_array();
-            $r['jumlah_item'] = array_sum(array_column($r['items'], 'quantity'));
+        if (empty($rows)) return [];
+
+        // 2. Batch fetch semua details sekaligus pakai WHERE IN.
+        //    Lebih efisien dibanding query per transaksi (N+1 problem).
+        $trx_ids = array_column($rows, 'id');
+        $items_raw = $this->db
+            ->select('td.transaction_id, td.quantity, td.price, td.subtotal, p.name AS product_name')
+            ->from('transaction_details td')
+            ->join('products p', 'p.id = td.product_id', 'left')
+            ->where_in('td.transaction_id', $trx_ids)
+            ->get()
+            ->result_array();
+
+        // 3. Group items per transaction_id, sambil hitung subtotal & jumlah_item
+        $items_per_trx    = [];
+        $subtotal_per_trx = [];
+        $qty_per_trx      = [];
+
+        foreach ($items_raw as $i) {
+            $tid = $i['transaction_id'];
+
+            $items_per_trx[$tid][] = [
+                'nama'  => $i['product_name'] ?? 'Produk dihapus',
+                'harga' => (int) $i['price'],
+                'qty'   => (int) $i['quantity'],
+            ];
+
+            $subtotal_per_trx[$tid] = ($subtotal_per_trx[$tid] ?? 0) + (int) $i['subtotal'];
+            $qty_per_trx[$tid]      = ($qty_per_trx[$tid]      ?? 0) + (int) $i['quantity'];
         }
-        return $rows;
+
+        // 4. Map ke struktur yang sesuai dengan kebutuhan view
+        $result = [];
+        foreach ($rows as $r) {
+            $tid      = (int) $r['id'];
+            $subtotal = $subtotal_per_trx[$tid] ?? 0;
+            $total    = (int) $r['total_price'];
+
+            // Diskon = selisih subtotal vs total_price (kalau ada)
+            $diskon = max(0, $subtotal - $total);
+
+            $result[] = [
+                'id'              => $tid,
+                'kode'            => $r['invoice_number'],
+                'waktu'           => $r['created_at'],
+                'waktu_formatted' => $this->format_waktu_id($r['created_at']),
+                'kasir'           => $r['kasir_name'] ?? 'Kasir',
+                'metode'          => $r['payment_method'],
+                'jumlah_item'     => $qty_per_trx[$tid] ?? 0,
+                'subtotal'        => $subtotal,
+                'diskon'          => $diskon,
+                'total'           => $total,
+                'uang_diterima'   => $r['payment_method'] === 'tunai' ? (int) $r['total_pay'] : null,
+                'items'           => $items_per_trx[$tid] ?? [],
+            ];
+        }
+
+        return $result;
+    }
+
+    public function get_today_summary()
+    {
+        $today = date('Y-m-d');
+
+        // 1. Ambil semua transaksi hari ini
+        $rows = $this->db
+            ->select('t.*, u.fullname AS kasir_name')
+            ->from('transactions t')
+            ->join('users u', 'u.id = t.created_by', 'left')
+            ->where('DATE(t.created_at)', $today)
+            ->order_by('t.created_at', 'DESC')
+            ->limit(10)
+            ->get()
+            ->result_array();
+
+        if (empty($rows)) {
+            return [
+                'omzet'            => 0,
+                'jumlah_transaksi' => 0,
+                'produk_terjual'   => 0,
+                'transaksi'        => [],
+            ];
+        }
+
+        // 2. Ambil detail item semua transaksi sekaligus
+        $trx_ids = array_column($rows, 'id');
+
+        $details = $this->db
+            ->select('
+            td.transaction_id,
+            td.quantity,
+            td.price,
+            td.subtotal,
+            p.name AS product_name
+        ')
+            ->from('transaction_details td')
+            ->join('products p', 'p.id = td.product_id', 'left')
+            ->where_in('td.transaction_id', $trx_ids)
+            ->get()
+            ->result_array();
+
+        // 3. Grouping
+        $items_per_trx = [];
+        $qty_per_trx   = [];
+
+        foreach ($details as $d) {
+            $tid = $d['transaction_id'];
+
+            $items_per_trx[$tid][] = [
+                'nama'  => $d['product_name'] ?? 'Produk dihapus',
+                'harga' => (int) $d['price'],
+                'qty'   => (int) $d['quantity'],
+            ];
+
+            $qty_per_trx[$tid] = ($qty_per_trx[$tid] ?? 0) + (int) $d['quantity'];
+        }
+
+        // 4. Mapping final
+        $transaksi = [];
+        $omzet = 0;
+        $total_item = 0;
+
+        foreach ($rows as $r) {
+            $tid = (int) $r['id'];
+            $total = (int) $r['total_price'];
+            $qty = $qty_per_trx[$tid] ?? 0;
+
+            $omzet += $total;
+            $total_item += $qty;
+
+            $transaksi[] = [
+                'id'              => $tid,
+                'kode'            => $r['invoice_number'],
+                'waktu'           => $r['created_at'],
+                'jam'             => date('H:i', strtotime($r['created_at'])),
+                'kasir'           => $r['kasir_name'] ?? 'Kasir',
+                'metode'          => $r['payment_method'],
+                'jumlah_item'     => $qty,
+                'total'           => $total,
+                'items'           => $items_per_trx[$tid] ?? [],
+            ];
+        }
+
+        return [
+            'omzet'            => $omzet,
+            'jumlah_transaksi' => count($rows),
+            'produk_terjual'   => $total_item,
+            'transaksi'        => $transaksi,
+        ];
+    }
+
+    public function count_today()
+    {
+        return $this->db
+            ->where('DATE(created_at)', date('Y-m-d'))
+            ->count_all_results('transactions');
+    }
+
+    public function omzet_today()
+    {
+        $row = $this->db
+            ->select_sum('total_price')
+            ->where('DATE(created_at)', date('Y-m-d'))
+            ->get('transactions')
+            ->row_array();
+        return (int) ($row['total_price'] ?? 0);
+    }
+
+    public function get_recent($limit = 5)
+    {
+        return $this->db
+            ->select('t.*, u.fullname AS kasir')
+            ->from('transactions t')
+            ->join('users u', 'u.id = t.created_by', 'left')
+            ->order_by('t.created_at', 'desc')
+            ->limit($limit)
+            ->get()
+            ->result_array();
+    }
+
+    private function format_waktu_id(string $datetime)
+    {
+        $bulan = [
+            1 => 'Jan',
+            'Feb',
+            'Mar',
+            'Apr',
+            'Mei',
+            'Jun',
+            'Jul',
+            'Agu',
+            'Sep',
+            'Okt',
+            'Nov',
+            'Des',
+        ];
+
+        $ts = strtotime($datetime);
+        if (!$ts) return $datetime;
+
+        return date('d', $ts) . ' ' . $bulan[(int) date('n', $ts)] . ' ' . date('Y, H:i', $ts);
     }
 }

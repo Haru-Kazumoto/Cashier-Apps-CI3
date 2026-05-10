@@ -1,11 +1,14 @@
 <!-- application/views/kasir/produk/form_tambah.php -->
 <!-- Dirender via layout: $layout = 'kasir', $active_menu = 'produk' -->
 
-<?php $navy = '#1e3a5f'; ?>
+<?php
+$navy = '#1e3a5f';
+$back_route = $this->session->userdata('is_admin') > 0 ? site_url('kasir/produk') : site_url('superadmin/products');
+?>
 
 <!-- Header dengan back -->
 <div class="flex items-center gap-3 mb-6">
-    <a href="<?= site_url('kasir/produk') ?>"
+    <a href="<?= $back_route ?>"
         class="w-9 h-9 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />

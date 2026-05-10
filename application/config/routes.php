@@ -1,5 +1,5 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
 /*
 | -------------------------------------------------------------------------
@@ -60,6 +60,24 @@ $route['logout'] = 'authentication/logout';
 
 // SUPERADMIN ROUTE
 $route['dashboard/superadmin'] = 'dashboard/superadmin';
+// --- Users (CRUD via modal) ---
+$route['superadmin/users']                    = 'users/index';
+$route['superadmin/users/store']              = 'users/store';
+$route['superadmin/users/update/(:num)']      = 'users/update/$1';
+$route['superadmin/users/delete/(:num)']      = 'users/delete/$1';
+
+// --- Products ---
+$route['superadmin/products']                 = 'product/index_superadmin';
+$route['superadmin/products/tambah']          = 'product/new';
+$route['superadmin/products/simpan']          = 'product/simpan';
+$route['superadmin/products/edit/(:num)']     = 'product/edit/$1';
+$route['superadmin/products/update/(:num)']   = 'product/update/$1';
+$route['superadmin/products/delete/(:num)']   = 'product/delete/$1';
+
+// --- Transactions / Laporan ---
+$route['superadmin/transactions']             = 'transactions/reports_superadmin';
+$route['superadmin/transactions/reports']     = 'transactions/reports_superadmin';
+$route['superadmin/transactions/export']      = 'transactions/export';
 
 // ADMIN ROUTE
 $route['kasir/dashboard'] = 'dashboard/admin';
@@ -70,4 +88,5 @@ $route['kasir/produk'] = 'product/index';
 $route['kasir/produk/tambah'] = 'product/new';
 $route['kasir/produk/edit/(:num)'] = 'product/edit/$1';
 $route['kasir/produk/save'] = 'product/save';
+$route['kasir/produk/delete/(:num)'] = 'product/delete/$1';
 $route['kasir/produk/update/(:num)'] = 'product/update/$1';

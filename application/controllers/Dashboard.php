@@ -7,7 +7,7 @@ class Dashboard extends MY_Controller
     {
         parent::__construct();
 
-        $this->load->model('Transaction_model');
+        $this->load->model(['User_model', 'Product_model', 'Transaction_model']);
 
         // Check if user is logged in
         if (!$this->session->userdata('logged_in')) {
@@ -19,18 +19,7 @@ class Dashboard extends MY_Controller
     {
         $data = [
             'title'       => 'Beranda',
-            'active_menu' => 'beranda',     // tab aktif di bottom nav
-            'user'        => ['nama' => 'Andi'],
-            'omzet_hari_ini'    => 1250000,
-            'jumlah_transaksi'  => 12,
-            'produk_terjual'    => 47,
-            'total_stok'        => 320,
-            'stok_menipis'      => 5,
-            'transaksi_terbaru' => [
-                ['kode' => 'TRX0012', 'waktu' => '14:22', 'item' => 3, 'total' => 145000],
-                ['kode' => 'TRX0011', 'waktu' => '13:55', 'item' => 1, 'total' => 28000],
-                ['kode' => 'TRX0010', 'waktu' => '13:10', 'item' => 5, 'total' => 312000],
-            ],
+            'todays_summary' => $this->Transaction_model->get_today_summary(),
         ];
 
         $this->render('admin/dashboard', $data, 'admin');
@@ -38,9 +27,17 @@ class Dashboard extends MY_Controller
 
     public function superadmin()
     {
-        $this->render('superadmin/dashboard', [
-            'title' => 'Dashboard',
-            'transactions' => []
-        ], 'superadmin');
+        $data = [
+            'page_title'         => 'Dashboard',
+            'active_menu'        => 'dashboard',
+            'total_users'        => $this->User_model->count_all(),
+            'total_produk'       => $this->Product_model->count_all(),
+            'transaksi_hari_ini' => $this->Transaction_model->count_today(),
+            'omzet_hari_ini'     => $this->Transaction_model->omzet_today(),
+            'transaksi_terbaru'  => $this->Transaction_model->get_recent(5),
+            'stok_menipis'       => $this->Product_model->get_stok_menipis(5),
+        ];
+
+        $this->render('superadmin/dashboard', $data, 'superadmin');
     }
 }

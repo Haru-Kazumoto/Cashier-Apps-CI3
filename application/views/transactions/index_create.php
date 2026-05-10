@@ -234,7 +234,7 @@
                 class="flex-1 py-3 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50">
                 ← Kembali
             </button>
-            <button type="submit" id="btn-selesai"
+            <button type="button" id="btn-selesai" onclick="bukaModal()"
                 class="flex-[2] py-3 text-sm font-semibold text-white rounded-xl transition-opacity hover:opacity-90 disabled:opacity-40"
                 style="background-color: <?= $navy ?>;">
                 Selesaikan Transaksi
@@ -243,12 +243,98 @@
     </form>
 </section>
 
+<!-- ========== MODAL KONFIRMASI ========== -->
+<div id="modal-konfirmasi" class="fixed inset-0 z-50 hidden items-center justify-center"
+    style="background-color: rgba(0,0,0,0.5);">
+    <div class="bg-white rounded-2xl w-full max-w-md mx-auto overflow-hidden"
+        style="animation: slideUp .25s ease; max-height: 90vh; overflow-y: auto;">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <h2 class="text-base font-bold text-slate-800">Konfirmasi Transaksi</h2>
+            <button type="button" onclick="tutupModal()"
+                class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-sm">✕</button>
+        </div>
+
+        <!-- Tagihan -->
+        <div class="m-4 rounded-2xl p-4 text-white" style="background-color: <?= $navy ?>;">
+            <p class="text-xs uppercase tracking-widest text-white/60 mb-1">Total Tagihan</p>
+            <p id="modal-total" class="text-3xl font-bold">Rp 0</p>
+            <div id="modal-meta-tunai" class="flex gap-4 mt-3 pt-3 border-t border-white/20">
+                <div>
+                    <span class="text-xs text-white/60">Metode</span>
+                    <p id="modal-metode-label" class="text-sm font-semibold">Tunai</p>
+                </div>
+                <div id="modal-uang-wrap">
+                    <span class="text-xs text-white/60">Uang diterima</span>
+                    <p id="modal-uang" class="text-sm font-semibold">Rp 0</p>
+                </div>
+                <div id="modal-kembalian-wrap">
+                    <span class="text-xs text-white/60">Kembalian</span>
+                    <p id="modal-kembalian" class="text-sm font-semibold">Rp 0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daftar produk -->
+        <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Ringkasan Pesanan</p>
+        <div id="modal-items" class="mx-4 mb-3 border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100"></div>
+
+        <!-- Rincian -->
+        <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Rincian Pembayaran</p>
+        <div class="mx-4 mb-4 border border-slate-200 rounded-xl overflow-hidden text-sm">
+            <div class="flex justify-between px-4 py-2.5 text-slate-600 bg-white">
+                <span>Subtotal</span><span id="modal-subtotal" class="font-semibold text-slate-800">Rp 0</span>
+            </div>
+            <div class="flex justify-between px-4 py-2.5 text-slate-600 bg-white border-t border-slate-100">
+                <span>Diskon</span><span id="modal-diskon" class="font-semibold text-slate-800">Rp 0</span>
+            </div>
+            <div class="flex justify-between px-4 py-2.5 font-bold bg-slate-50 border-t border-slate-100">
+                <span class="text-slate-800">Total</span>
+                <span id="modal-total-2" style="color:<?= $navy ?>">Rp 0</span>
+            </div>
+            <div id="modal-kembalian-row" class="flex justify-between px-4 py-2.5 bg-white border-t border-slate-100">
+                <span class="text-slate-600">Kembalian</span>
+                <span id="modal-kembalian-2" class="font-bold text-emerald-600">Rp 0</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex gap-2 px-4 pb-6 border-t border-slate-100 pt-3">
+            <button type="button" onclick="tutupModal()"
+                class="flex-1 py-3 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50">
+                ← Kembali
+            </button>
+            <button type="button" id="btn-konfirmasi-submit"
+                class="flex-[2] py-3 text-sm font-semibold text-white rounded-xl hover:opacity-90 flex items-center justify-center gap-2"
+                style="background-color: <?= $navy ?>;">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Proses Transaksi
+            </button>
+        </div>
+    </div>
+</div>
+
 <style>
     /* Active state untuk metode pembayaran */
     .metode-option input:checked+div {
         background-color: var(--navy) !important;
         border-color: var(--navy) !important;
         color: white !important;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(40px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
 </style>
 
@@ -402,6 +488,71 @@
             document.getElementById('uang-diterima').value = n;
             hitungKembalian();
         };
+
+        window.bukaModal = function() {
+            const total = calcTotal();
+            const subtotal = calcSubtotal();
+            const metode = document.querySelector('input[name="metode"]:checked').value;
+            const uang = parseInt(document.getElementById('uang-diterima').value) || 0;
+            const kembalian = Math.max(0, uang - total);
+            const metodeLabel = {
+                tunai: 'Tunai',
+                transfer: 'Transfer',
+                qris: 'QRIS'
+            };
+
+            // Isi nilai
+            document.getElementById('modal-total').textContent = fmt(total);
+            document.getElementById('modal-total-2').textContent = fmt(total);
+            document.getElementById('modal-subtotal').textContent = fmt(subtotal);
+            document.getElementById('modal-diskon').textContent = fmt(diskon);
+            document.getElementById('modal-metode-label').textContent = metodeLabel[metode] || metode;
+
+            // Tampilkan/sembunyikan kolom uang & kembalian
+            const isTunai = metode === 'tunai';
+            document.getElementById('modal-uang-wrap').classList.toggle('hidden', !isTunai);
+            document.getElementById('modal-kembalian-wrap').classList.toggle('hidden', !isTunai);
+            document.getElementById('modal-kembalian-row').classList.toggle('hidden', !isTunai);
+            if (isTunai) {
+                document.getElementById('modal-uang').textContent = fmt(uang);
+                document.getElementById('modal-kembalian').textContent = fmt(kembalian);
+                document.getElementById('modal-kembalian-2').textContent = fmt(kembalian);
+            }
+
+            // Render item list
+            document.getElementById('modal-items').innerHTML = cart.map(c => `
+        <div class="flex items-center justify-between px-4 py-2.5 bg-white text-sm">
+            <div>
+                <p class="font-semibold text-slate-800">${c.name}</p>
+                <p class="text-xs text-slate-400">${c.quantity} × ${fmt(c.price)}</p>
+            </div>
+            <span class="font-bold text-slate-800">${fmt(c.price * c.quantity)}</span>
+        </div>
+    `).join('');
+
+            // Tampilkan modal
+            const modal = document.getElementById('modal-konfirmasi');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.tutupModal = function() {
+            const modal = document.getElementById('modal-konfirmasi');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        // Tombol "Proses Transaksi" di dalam modal → submit form sungguhan
+        document.getElementById('btn-konfirmasi-submit').addEventListener('click', function() {
+            document.getElementById('cart-data-input').value = JSON.stringify(cart);
+            document.getElementById('diskon-input').value = diskon;
+            document.getElementById('form-bayar').submit();
+        });
+
+        // Tutup modal kalau klik backdrop
+        document.getElementById('modal-konfirmasi').addEventListener('click', function(e) {
+            if (e.target === this) tutupModal();
+        });
 
         // ===== Event Bindings =====
         // Klik produk

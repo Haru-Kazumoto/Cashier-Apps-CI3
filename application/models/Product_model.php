@@ -114,4 +114,19 @@ class Product_model extends CI_Model
             ->where('id', (int) $id)
             ->update($this->table);
     }
+
+    public function count_all()
+    {
+        return $this->db->count_all($this->table);
+    }
+
+    public function get_stok_menipis($threshold = 5, $limit = 10)
+    {
+        return $this->db
+            ->where('stock <=', $threshold)
+            ->order_by('stock', 'asc')
+            ->limit($limit)
+            ->get($this->table)
+            ->result_array();
+    }
 }
